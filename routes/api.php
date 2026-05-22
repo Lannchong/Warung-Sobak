@@ -26,6 +26,7 @@ Route::put('/orders/{id}', [OrderController::class, 'update']);   // 4. PUT ubah
 Route::get('/orders/ringkasan/all', [OrderController::class, 'ringkasan']); // 5. GET laporan omzet (BARU)
 Route::delete('/orders/{id}', [OrderController::class, 'destroy']); // 6. DELETE hapus order (BARU)
 // ==========================================
+
 // 2. ENDPOINT WEB ADMIN (Bungkus Middleware Web)
 // ==========================================
 Route::middleware('web')->group(function () {
