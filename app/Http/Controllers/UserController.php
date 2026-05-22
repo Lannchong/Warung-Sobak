@@ -36,10 +36,11 @@ class UserController extends Controller
             'role' => 'customer', // Defaultnya pasti customer
         ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Registrasi berhasil!',
-            'data' => $user
-        ], 201);
+//        return response()->json([
+//            'status' => 'success',
+ //           'message' => 'Registrasi berhasil!',
+//            'data' => $user
+//        ], 201);
+return redirect()->back()->with('success', 'Registrasi berhasil!');
     }
 }

@@ -171,12 +171,15 @@
     <div class="main-content">
         
         <div class="top-navbar">
-            <div class="search-box">
+            <form action="{{ route('dashboard') }}" method="GET" class="search-box">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                    <input type="text" class="form-control border-start-0" placeholder="Cari data pengguna atau nomor pesanan...">
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari data pengguna..." value="{{ request('search') }}">
+                    @if(request('search'))
+                        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary border-start-0 d-flex align-items-center">Clear</a>
+                    @endif
                 </div>
-            </div>
+            </form>
             
             <div class="nav-icons">
                 <a href="#" class="circle-icon" title="Notifikasi"><i class="fas fa-bell"></i></a>
@@ -184,10 +187,12 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 style="font-weight: 800; color: var(--dark-black);">Daftar Data Pengguna</h3>
-            <button class="btn btn-dark" style="background-color: var(--dark-black);"><i class="fas fa-plus me-2"></i>Tambah Data Nanti</button>
-        </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                 <h3 style="font-weight: 800; color: var(--dark-black);">Daftar Data Pengguna</h3>
+                    <a href="{{ route('users.create') }}" class="btn btn-dark border-0" style="background-color: var(--dark-black);">
+                    <i class="fas fa-plus me-2"></i>Tambah Data Pengguna
+                </a>
+            </div>
         
         <div class="placeholder-box">
             <i class="fas fa-database me-2"></i> [ Tempat Data User 1 - Akan di-generate via Database ]
