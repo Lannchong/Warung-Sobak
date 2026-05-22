@@ -19,10 +19,12 @@ Route::put('/menus/{id}', [MenuController::class, 'update']); // PUT update menu
 Route::delete('/menus/{id}', [MenuController::class, 'destroy']); // DELETE menu (Admin)
 
 // Endpoint untuk Transaksi / Order
-Route::get('/orders', [OrderController::class, 'index']);     // GET semua order
-Route::post('/orders', [OrderController::class, 'store']);    // POST transaksi baru
-Route::put('/orders/{id}', [OrderController::class, 'update']); // PUT ubah status orderphp artisan serve --host=0.0.0.0
-
+Route::get('/orders', [OrderController::class, 'index']);       // 1. GET semua order
+Route::post('/orders', [OrderController::class, 'store']);      // 2. POST transaksi baru
+Route::get('/orders/{id}', [OrderController::class, 'show']);   // 3. GET cek 1 nota spesifik (BARU)
+Route::put('/orders/{id}', [OrderController::class, 'update']);   // 4. PUT ubah status order
+Route::get('/orders/ringkasan/all', [OrderController::class, 'ringkasan']); // 5. GET laporan omzet (BARU)
+Route::delete('/orders/{id}', [OrderController::class, 'destroy']); // 6. DELETE hapus order (BARU)
 // ==========================================
 // 2. ENDPOINT WEB ADMIN (Bungkus Middleware Web)
 // ==========================================
