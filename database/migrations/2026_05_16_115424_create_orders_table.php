@@ -10,14 +10,11 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            // Data Pelanggan langsung nempel di pesanan
-            $table->string('customer_name'); 
-            $table->string('table_number')->nullable(); // Nomor meja (opsional)
-            
-            // Total belanjaan & status pesanan
-            $table->integer('total_price'); 
-            $table->enum('status', ['pending', 'dimasak', 'selesai'])->default('pending');
-            
+            $table->string('user');          // Kolom untuk nama pemesan
+            $table->string('menu');          // Kolom untuk nama menu
+            $table->integer('quantity');     // Kolom untuk jumlah pesanan
+            $table->integer('total_price');  // Kolom untuk total harga
+            $table->string('status')->default('diproses'); // Status otomatis
             $table->timestamps();
         });
     }

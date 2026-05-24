@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Nama Lengkap Admin / Staf
-            $table->string('email')->unique(); // Email untuk login ke Dashboard Admin
+            $table->string('name'); // Nama Lengkap
+            $table->string('email')->unique(); // Email untuk login
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password'); // Password login Admin
-            $table->enum('role', ['super_admin', 'admin'])->default('admin'); // Role diubah menjadi khusus internal warung
+            $table->string('password'); // Password
+            $table->string('role')->default('customer'); 
             $table->rememberToken();
             $table->timestamps();
         });

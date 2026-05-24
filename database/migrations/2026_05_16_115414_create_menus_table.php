@@ -12,12 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('menus', function (Blueprint $table) {
-            $table->id(); 
-            $table->string('name'); // Nama menu (contoh: "Soto Ayam")
-            $table->integer('price'); // Harga menu (contoh: 15000)
-            $table->text('description')->nullable(); // Deskripsi menu
-            $table->integer('stock')->default(0); // Sisa stok
-            $table->string('image_url')->nullable(); // Link gambar menu
+            $table->id();
+            $table->string('name'); // Nama menu
+            $table->integer('price'); // Harga
+            $table->text('description')->nullable(); // Deskripsi
+            $table->string('category')->nullable(); // <--- TAMBAHKAN INI UNTUK KATEGORI
+            $table->string('image_url')->nullable(); // Link gambar
+            $table->integer('stock')->default(0); // Sisa stok (Cukup tulis SATU KALI saja)
             $table->timestamps();
         });
     }
