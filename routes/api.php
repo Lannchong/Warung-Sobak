@@ -36,6 +36,7 @@ Route::delete('/orders/{id}', [OrderController::class, 'destroy']);// DELETE mem
 
 // 2. ENDPOINT WEB ADMIN (Bungkus Middleware Web)
 
+
 Route::middleware('web')->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
     // Halaman untuk form tambah data pengguna baru
