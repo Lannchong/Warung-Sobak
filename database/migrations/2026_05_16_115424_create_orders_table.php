@@ -6,15 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+    public function up()
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('user');          // Kolom untuk nama pemesan
-            $table->string('menu');          // Kolom untuk nama menu
-            $table->integer('quantity');     // Kolom untuk jumlah pesanan
-            $table->integer('total_price');  // Kolom untuk total harga
-            $table->string('status')->default('diproses'); // Status otomatis
+            // Menghubungkan pesanan ke ID Pelanggan di tabel users
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            // Menghubungkan pesanan ke ID Menu di tabel menus
+            $table->foreignId('menu_id')->constrained('menus')->onDelete('cascade'); // Kolom menu_id sudah ditambahkan di sini
+            $table->string('nomor_pesanan')->unique(); // Contoh: SBK-20260525-001
+            $table->integer('jumlah'); // Kolom jumlah ditambahkan 
+            $table->decimal('total_harga', 10, 2);
+            // Status pesanan dikunci menggunakan enum agar aman
+            $table->enum('status', ['pending', 'diproses', 'selesai', 'dibatalkan'])->default('pending');
+            $table->string('catatan')->nullable(); // Catatan pembeli (misal: "tanpa seledri")
             $table->timestamps();
         });
     }

@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Nama menu
-            $table->integer('price'); // Harga
-            $table->text('description')->nullable(); // Deskripsi
-            $table->string('category')->nullable(); // <--- TAMBAHKAN INI UNTUK KATEGORI
-            $table->string('image_url')->nullable(); // Link gambar
-            $table->integer('stock')->default(0); // Sisa stok (Cukup tulis SATU KALI saja)
+            $table->string('nama_menu'); // Laci untuk nama makanan/minuman
+            $table->integer('harga');    // Laci untuk angka harga
+            $table->string('kategori');  // Laci untuk Makanan/Minuman
+            $table->text('deskripsi')->nullable(); // Laci deskripsi (boleh kosong)
+            $table->string('foto')->nullable();    // Laci path foto (boleh kosong)
             $table->timestamps();
         });
     }

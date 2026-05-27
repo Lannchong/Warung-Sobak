@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    // [GET] Mengambil semua data user
+    // --- AMBIL SEMUA DATA USER ---
     public function index()
     {
         $users = User::all();
@@ -19,120 +18,75 @@ class UserController extends Controller
         ], 200);
     }
 
-    // [POST] Registrasi User Baru (Bisa dari Android & Web Admin)
+    // --- REGISTRASI (Android Pelanggan) ---
     public function store(Request $request)
     {
-        // Validasi input
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|unique:users',
+            'password' => 'required|string|min:6',
         ]);
 
-        // Buat user baru
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'customer', // Default role tetap customer
+            'role'     => 'pelanggan', 
         ]);
 
-        // PINTAR: Jika yang request Android (minta JSON), kirim data JSON
-        if ($request->expectsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Registrasi berhasil!',
-                'data' => $user
-            ], 201);
-        }
-
-        // Jika yang request browser Web Admin, lakukan redirect
-        return redirect()->back()->with('success', 'Registrasi berhasil!');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Akun berhasil dibuat! Silakan login.'
+        ], 201);
     }
 
-    // [POST] Login Khusus User/Pelanggan dari Android
+    // --- LOGIN USER / PELANGGAN (Android) ---
     public function loginUser(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        // Cari user berdasarkan email
-        $user = User::where('email', $request->email)->first();
-
-        // Cek apakah user ada dan password-nya benar
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Email atau password salah!'
-            ], 401);
-        }
-
-        // Pastikan yang login adalah customer, bukan admin
-        if ($user->role !== 'customer') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Akses ditolak! Akun ini terdaftar sebagai Admin.'
-            ], 403);
-        }
-
-        // Cek dan cetak TOKEN Sanctum untuk Android
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Login Pelanggan Berhasil!',
-            'token' => $token,
-            'data' => $user
-        ], 200);
-    }
-
-    // [POST] Login Khusus Admin dari Android
-    public function loginAdmin(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Email atau password salah!'
-            ], 401);
+            return response()->json(['message' => 'Email atau Password salah!'], 401);
         }
 
-        // Pastikan yang login memang role-nya Admin
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Akses ditolak! Anda bukan Admin.'
-            ], 403);
-        }
-
-        // Cetak TOKEN Sanctum khusus Admin
-        $token = $user->createToken('admin_token')->plainTextToken;
+        // Bikin token buat Android
+        $token = $user->createToken('android-token')->plainTextToken;
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Login Admin Berhasil!',
-            'token' => $token,
-            'data' => $user
+            'status'  => 'success',
+            'user'    => $user,
+            'token'   => $token
         ], 200);
     }
 
-    // [POST] Logout untuk menghapus token di Android
+    // --- LOGOUT (Android) ---
     public function logout(Request $request)
     {
-        // Menghapus token yang sedang digunakan saat ini
         $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Logout berhasil!']);
+    }
+
+    // --- AMBIL DATA PROFIL 1 USER (Android) ---
+    public function show($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User tidak ditemukan'
+            ], 404);
+        }
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Berhasil logout, token dihapus!'
+            'message' => 'Berhasil mengambil data profil',
+            'data' => $user
         ], 200);
     }
 }

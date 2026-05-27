@@ -7,114 +7,48 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    // 1. [GET] Mengambil semua data pesanan
+    // 1. Menampilkan halaman Kelola Order di Web Admin
     public function index()
     {
-        $orders = Order::all();
-        return response()->json([
-            'status' => 'success',
-            'data' => $orders
-        ], 200);
+        // Ambil semua order dari yang terbaru, beserta data user (pelanggan) dan menu-nya
+        $orders = Order::with(['user', 'menu'])->orderBy('created_at', 'desc')->get();
+        
+        return view('admin.orders', compact('orders'));
     }
 
-    // 2. [POST] Membuat pesanan baru dari Android
+    // 2. Mengubah status pesanan (Pending -> Diproses -> Selesai)
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,diproses,selesai,dibatalkan'
+        ]);
+
+        $order = Order::findOrFail($id);
+        $order->status = $request->status;
+        $order->save();
+
+        return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui!');
+    }
+
+    // 3. Menangani pesanan baru yang masuk dari API / Postman (BARU DITAMBAHKAN)
     public function store(Request $request)
     {
-        // Validasi data yang dikirim Android agar tidak ada data kosong/rusak
-        $validated = $request->validate([
-            'user' => 'required|string',
-            'menu' => 'required|string',
-            'quantity' => 'required|integer|min:1',
-            'total_price' => 'required|integer',
+        // Menyimpan data pesanan ke database
+        $order = Order::create([
+            'user_id'       => $request->user_id,
+            'menu_id'       => $request->menu_id,
+            'jumlah'        => $request->jumlah,
+            'total_harga'   => $request->total_harga,
+            // Jika nomor_pesanan dikosongkan di Postman, otomatis bikin format: SBK-JamSaatIni
+            'nomor_pesanan' => $request->nomor_pesanan ?? 'SBK-' . time(), 
+            'catatan'       => $request->catatan,
         ]);
 
-        // Secara otomatis set status awal pesanan menjadi 'diproses'
-        $validated['status'] = 'diproses'; 
-
-        // Menyimpan data yang sudah lolos validasi (lebih aman)
-        $order = Order::create($validated);
-
+        // Mengirimkan balasan sukses ke Postman
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Pesanan berhasil dibuat!',
-            'data' => $order
+            'data'    => $order
         ], 201);
-    }
-
-    // 3. [GET] Mengambil 1 data pesanan spesifik berdasarkan ID (Cek Status Nota)
-    public function show($id)
-    {
-        $order = Order::find($id);
-
-        if (!$order) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pesanan tidak ditemukan'
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $order
-        ], 200);
-    }
-
-    // 4. [PUT] Mengubah status pesanan (Oleh Admin/Kasir)
-    public function update(Request $request, $id)
-    {
-        $order = Order::find($id);
-
-        if (!$order) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pesanan tidak ditemukan'
-            ], 404);
-        }
-
-        // Memastikan status yang diinput hanya bisa antara: diproses, selesai, atau dibatalkan
-        $request->validate([
-            'status' => 'required|string|in:diproses,selesai,dibatalkan'
-        ]);
-
-        // Update status baru
-        $order->update([
-            'status' => $request->status
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Status pesanan berhasil diupdate!',
-            'data' => $order
-        ], 200);
-    }
-
-    // 5. [GET] Fitur Simpel Ringkasan Pendapatan & Total Nota untuk Owner/Admin
-    public function ringkasan()
-    {
-        return response()->json([
-            'status' => 'success',
-            'total_pesanan' => Order::count(),
-            'total_pendapatan' => Order::sum('total_price')
-        ], 200);
-    }
-
-    // 6. [DELETE] Menghapus pesanan secara permanen dari database
-    public function destroy($id)
-    {
-        $order = Order::find($id);
-
-        if (!$order) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pesanan tidak ditemukan atau sudah dihapus'
-            ], 404);
-        }
-
-        $order->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Pesanan berhasil dihapus dari sistem!'
-        ], 200);
     }
 }

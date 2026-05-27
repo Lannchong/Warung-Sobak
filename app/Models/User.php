@@ -21,6 +21,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role', // Tambahkan role agar fitur Admin/Customer bisa jalan
+        'google_id', // <--- Ini yang baru ditambahkan untuk Login Google
     ];
 
     /**
