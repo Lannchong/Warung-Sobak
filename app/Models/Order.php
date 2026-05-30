@@ -9,32 +9,28 @@ class Order extends Model
 {
     use HasFactory;
 
-    // Kita lengkapi fillable-nya agar Laravel tidak membuang data dari Postman
+    // PASTIKAN SEMUA KOLOM TERDAFTAR DI SINI AGAR TIDAK ERROR NULL
     protected $fillable = [
         'user_id',
-        'menu_id',       
-        'jumlah',        
-        'nomor_pesanan',
+        'menu_id',
+        'jumlah',
         'total_harga',
+        'nomor_pesanan',
         'status',
         'catatan',
+        'nama_pemesan',
+        'nomor_meja',
+        'metode_pembayaran',
+        'detail_pesanan'
     ];
 
-    // Hubungan: 1 Pesanan dimiliki oleh 1 User (Pelanggan)
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Hubungan: 1 Pesanan merujuk pada 1 Menu makanan (Ini yang menyembuhkan error di Postman)
     public function menu()
     {
-        return $this->belongsTo(Menu::class, 'menu_id');
-    }
-
-    // Hubungan: 1 Pesanan bisa memiliki banyak menu makanan di dalamnya (Opsional jika nanti butuh)
-    public function items()
-    {
-        return $this->hasMany(OrderItem::class);
+        return $this->belongsTo(Menu::class);
     }
 }

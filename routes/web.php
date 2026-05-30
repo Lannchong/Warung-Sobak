@@ -6,22 +6,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Http\Controllers\DashboardController;
 
-
-// ========================================================
-// 1. RUTE LUAR (TIDAK MASUK PREFIX ADMIN)
-// ========================================================
-
-// Halaman Utama: Otomatis dialihkan ke login admin
+// 1. RUTE LUAR (BISA DIAKSES TANPA LOGIN)
 Route::get('/', function () {
     return redirect('/admin/login');
 });
 
-// Tampilan Halaman Login
 Route::get('/admin/login', function () {
     return view('admin.login'); 
 })->name('login');
 
-// Proses Eksekusi Login
 Route::post('/admin/login', function (Request $request) {
     $credentials = $request->validate([
         'email' => ['required', 'email'],
@@ -38,7 +31,6 @@ Route::post('/admin/login', function (Request $request) {
     ])->onlyInput('email');
 })->name('login.post');
 
-// Proses Eksekusi Logout
 Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
@@ -47,10 +39,8 @@ Route::post('/logout', function (Request $request) {
 })->name('logout');
 
 
-// ========================================================
-// 2. KELOMPOK RUTE KHUSUS ADMIN (OTOMATIS DIAWALI /admin/...)
-// ========================================================
-Route::middleware('web')->prefix('admin')->group(function () {
+// 2. KELOMPOK RUTE KHUSUS ADMIN (WAJIB LOGIN / PROTECTED)
+Route::middleware(['auth'])->prefix('admin')->group(function () {
     
     // Halaman Dashboard Utama & Menu Lainnya
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
@@ -58,7 +48,10 @@ Route::middleware('web')->prefix('admin')->group(function () {
     Route::get('/menus', [DashboardController::class, 'menus'])->name('admin.menus');
     Route::get('/orders', [DashboardController::class, 'orders'])->name('admin.orders');
     
-    // --- RUTE UPDATE STATUS PESANAN (SUDAH DISUAIKAN DENGAN BLADE) ---
+    // RUTE BARU: Menampilkan daftar ulasan pelanggan di web admin
+    Route::get('/ulasan', [DashboardController::class, 'ulasans'])->name('admin.ulasans');
+    
+    // RUTE UPDATE STATUS PESANAN 
     Route::post('/orders/{id}/status', [DashboardController::class, 'updateOrderStatus'])->name('orders.updateStatus');
     
     // Tampilan Halaman Pengaturan
@@ -94,7 +87,7 @@ Route::middleware('web')->prefix('admin')->group(function () {
         return back()->with('success', 'Password berhasil diubah!');
     })->name('admin.settings.updatePassword');
 
-    // Rute Pengelolaan Data Terkait Dashboard
+    // Rute Pengelolaan Data Terkait Dashboard Admin
     Route::get('/users/create', [DashboardController::class, 'create'])->name('admin.users.create');
     Route::post('/users', [DashboardController::class, 'store'])->name('admin.users.store');
     Route::get('/menus/create', [DashboardController::class, 'createMenu'])->name('admin.menus.create');
@@ -104,3 +97,13 @@ Route::middleware('web')->prefix('admin')->group(function () {
     Route::delete('/menus/{id}', [DashboardController::class, 'destroyMenu'])->name('admin.menus.destroy');
     
 });
+
+// Wajib ditaruh di luar kelompok 'auth' agar sistem penulisan token email 
+// tidak diblokir saat diakses dari aplikasi Android.
+Route::get('/reset-password/{token}', function ($token) {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Token reset password berhasil dibuat. Gunakan token ini untuk update password.',
+        'token' => $token
+    ]);
+})->name('password.reset');

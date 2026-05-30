@@ -2,89 +2,125 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Menu;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ApiOrderController extends Controller
 {
-    // [POST] Fungsi menerima pesanan dari Android & memotong stok
+    // [POST] Membuat pesanan baru (Multi-Menu) dari Android Keranjang
     public function store(Request $request)
     {
-        // 1. Validasi data yang dikirim dari aplikasi Android
-        $request->validate([
-            'user_id'     => 'required|exists:users,id',
-            'menu_id'     => 'required|exists:menus,id',
-            'jumlah'      => 'required|integer|min:1',
-            'total_harga' => 'required|numeric',
+        $validator = Validator::make($request->all(), [
+            'user_id'           => 'required|integer',
+            'nama_pemesan'      => 'required|string',
+            'nomor_meja'        => 'required|integer',
+            'total_harga'       => 'required|string',
+            'metode_pembayaran' => 'required|string',
+            'items'             => 'required|array'
         ]);
 
-        // 2. Gunakan Database Transaction agar aman (jika ada 1 error, semua proses dibatalkan)
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $nomorPesananBersama = 'SBK-' . time();
+        $savedOrders = [];
+        $totalHargaClean = (int) preg_replace('/[^0-9]/', '', $request->total_harga);
+
         DB::beginTransaction();
 
         try {
-            // 3. Ambil data menu dan kunci datanya agar tidak bentrok saat diakses user lain bersamaan
-            $menu = Menu::lockForUpdate()->find($request->menu_id);
+            foreach ($request->items as $index => $item) {
+                
+                $itemArray = (array) $item;
+                $menuId = $itemArray['menu_id'] ?? $itemArray['menuId'] ?? null;
+                $jumlah = $itemArray['jumlah'] ?? $itemArray['qty'] ?? 1;
 
-            // 4. Cek apakah stok menu masih mencukupi
-            if ($menu->stok < $request->jumlah) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Maaf, stok ' . $menu->nama_menu . ' tidak mencukupi. Sisa stok: ' . $menu->stok
-                ], 400);
+                if (!$menuId) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Gagal memproses pesanan: Parameter menu_id tidak terbaca oleh server.'
+                    ], 422);
+                }
+
+                $menu = Menu::find($menuId);
+                if (!$menu) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Menu dengan ID ' . $menuId . ' tidak ditemukan di database.'
+                    ], 404);
+                }
+
+                if ($menu->stok < $jumlah) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Stok untuk menu ' . $menu->name . ' tidak mencukupi.'
+                    ], 400);
+                }
+
+                // Mempertahankan format catatan bawaan sistem kamu
+                $catatanOtomatis = "Meja: " . $request->nomor_meja . " | Pembayaran: " . $request->metode_pembayaran . " (Via Keranjang)";
+
+                $dataOrder = [
+                    'user_id'       => $request->user_id,
+                    'menu_id'       => $menuId,
+                    'jumlah'        => $jumlah,
+                    'total_harga'   => $totalHargaClean,
+                    
+                    // 🚀 ANTI DUPLICATE 1062: Ditambah -$index agar baris menu ke-1 dan ke-2 nomornya beda murni!
+                    'nomor_pesanan' => $nomorPesananBersama . '-' . $index,
+                    
+                    'status'        => 'pending',
+                    'catatan'       => $request->catatan ?? $catatanOtomatis,
+                ];
+
+                if (Schema::hasColumn('orders', 'nama_pemesan')) {
+                    $dataOrder['nama_pemesan'] = $request->nama_pemesan;
+                }
+                if (Schema::hasColumn('orders', 'nomor_meja')) {
+                    $dataOrder['nomor_meja'] = $request->nomor_meja;
+                }
+                if (Schema::hasColumn('orders', 'metode_pembayaran')) {
+                    $dataOrder['metode_pembayaran'] = $request->metode_pembayaran;
+                }
+
+                $order = Order::create($dataOrder);
+
+                // Potong stok menu
+                $menu->stok = $menu->stok - $jumlah;
+                $menu->save();
+
+                $savedOrders[] = [
+                    'id'      => $order->id,
+                    'menu_id' => $order->menu_id,
+                    'jumlah'  => $order->jumlah
+                ];
             }
 
-            // 5. PROSES POTONG STOK
-            $menu->stok -= $request->jumlah;
-            $menu->save();
-
-            // 6. SIMPAN DATA KE TABEL ORDERS
-            $order = new Order();
-            $order->user_id       = $request->user_id;
-            $order->menu_id       = $request->menu_id;
-            $order->jumlah        = $request->jumlah;
-            $order->total_harga   = $request->total_harga;
-            
-            // Otomatis bikin nomor pesanan misal: SBK-1698765432
-            $order->nomor_pesanan = $request->nomor_pesanan ?? 'SBK-' . time(); 
-            $order->catatan       = $request->catatan; // Sekalian simpan catatan pembeli
-            
-            $order->status        = 'pending'; // Status awal saat pertama kali dipesan
-            $order->save();
-
-            // Selesai dan simpan permanen ke database
             DB::commit();
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Pesanan berhasil dibuat, stok ' . $menu->nama_menu . ' otomatis berkurang!',
-                'data'    => $order
+                'message' => 'Semua pesanan keranjang berhasil dibuat!',
+                'data'    => $savedOrders
             ], 201);
 
         } catch (\Exception $e) {
-            // Jika ada error di tengah jalan, batalkan semua perubahan stok
-            DB::rollback();
+            DB::rollBack();
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Gagal memproses pesanan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan database internal: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    // [GET] Mengambil riwayat pesanan khusus untuk 1 user/pelanggan tertentu
-    public function userOrders($user_id)
-    {
-        // Mengambil pesanan berdasarkan user_id, beserta data relasi menunya
-        $orders = Order::with('menu')
-            ->where('user_id', $user_id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Berhasil mengambil riwayat pesanan pelanggan',
-            'data'    => $orders
-        ], 200);
     }
 }

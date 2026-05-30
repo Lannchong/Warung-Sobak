@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User; 
 use App\Models\Menu;
 use App\Models\Order; 
+use App\Models\Ulasan; // <--- SINKRON: Menggunakan Model Ulasan
+use App\Models\Favorite; // <--- TAMBAHAN: Menggunakan Model Favorite
 use Illuminate\Support\Facades\Hash; 
 use Illuminate\Support\Facades\Storage; 
 
@@ -18,6 +20,8 @@ class DashboardController extends Controller
         $totalPengguna = User::count();
         $totalMenu = Menu::count();
         $totalPesanan = Order::count();
+        $totalUlasan = Ulasan::count(); // <--- TAMBAHAN: Hitung total ulasan
+        $totalFavorit = Favorite::count(); // <--- TAMBAHAN: Hitung total favorit
 
         // Fitur pencarian user (bila perlu di dashboard)
         $search = $request->input('search');
@@ -30,7 +34,7 @@ class DashboardController extends Controller
         }
         
         // Jangan lupa compact variabel hitungannya
-        return view('admin.dashboard', compact('users', 'totalPengguna', 'totalMenu', 'totalPesanan'));
+        return view('admin.dashboard', compact('users', 'totalPengguna', 'totalMenu', 'totalPesanan', 'totalUlasan', 'totalFavorit'));
     }
 
     // 2. HALAMAN DATA PENGGUNA dan ADMIN 
@@ -54,8 +58,14 @@ class DashboardController extends Controller
         return view('admin.orders', compact('orders'));
     }
 
+    // -- BARU: HALAMAN MELIHAT ULASAN PELANGGAN DI WEB ADMIN
+    public function ulasans()
+    {
+        $ulasans = Ulasan::with(['user'])->orderBy('created_at', 'desc')->get();
+        return view('admin.ulasan', compact('ulasans')); // Sesuai dengan href="/admin/ulasan" di sidebar
+    }
+
     // FUNGSI UNTUK TAMBAH USER 
-    
     public function create()
     {
         return view('admin.create_user');
@@ -80,7 +90,6 @@ class DashboardController extends Controller
     }
 
     // FUNGSI UTAMA KELOLA MENU (CRUD) 
-
     public function createMenu()
     {
         return view('admin.create_menu');
@@ -92,7 +101,7 @@ class DashboardController extends Controller
             'nama_menu' => 'required|string|max:255',
             'harga' => 'required|numeric',
             'kategori' => 'required|string',
-            'stok' => 'required|integer|min:0', // <--- Validasi Stok Ditambahkan
+            'stok' => 'required|integer|min:0', 
             'deskripsi' => 'nullable|string',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', 
         ]);
@@ -101,7 +110,7 @@ class DashboardController extends Controller
         $menu->nama_menu = $request->nama_menu;
         $menu->harga = $request->harga;
         $menu->kategori = $request->kategori;
-        $menu->stok = $request->stok; // <--- Simpan Stok
+        $menu->stok = $request->stok; 
         $menu->deskripsi = $request->deskripsi;
         
         if ($request->hasFile('foto')) {
@@ -125,7 +134,7 @@ class DashboardController extends Controller
             'nama_menu' => 'required|string|max:255',
             'harga' => 'required|numeric',
             'kategori' => 'required|string',
-            'stok' => 'required|integer|min:0', // <--- Validasi Stok Ditambahkan
+            'stok' => 'required|integer|min:0', 
             'deskripsi' => 'nullable|string',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -134,7 +143,7 @@ class DashboardController extends Controller
         $menu->nama_menu = $request->nama_menu;
         $menu->harga = $request->harga;
         $menu->kategori = $request->kategori;
-        $menu->stok = $request->stok; // <--- Simpan Perubahan Stok
+        $menu->stok = $request->stok; 
         $menu->deskripsi = $request->deskripsi;
 
         if ($request->hasFile('foto')) {
@@ -161,7 +170,7 @@ class DashboardController extends Controller
         return redirect()->route('admin.menus')->with('success', 'Menu berhasil dihapus!');
     }
 
-    // --- FUNGSI UPDATE STATUS PESANAN (BARU DITAMBAHKAN) 
+    // --- FUNGSI UPDATE STATUS PESANAN 
     public function updateOrderStatus(Request $request, $id)
     {
         $request->validate([
@@ -169,7 +178,7 @@ class DashboardController extends Controller
         ]);
 
         $order = Order::findOrFail($id);
-        $order->status = $request->status; // Mengubah status misal jadi 'diproses' atau 'selesai'
+        $order->status = $request->status; 
         $order->save();
 
         return redirect()->route('admin.orders')->with('success', 'Status pesanan berhasil diperbarui!');

@@ -45,6 +45,34 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px; border-left: 5px solid #FF9800 !important;">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 60px; height: 60px; background-color: #fff3e0; color: #FF9800; font-size: 1.5rem;">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Total Ulasan</h6>
+                        <h3 class="mb-0 fw-bold">{{ $totalUlasan ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px; border-left: 5px solid #E91E63 !important;">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 60px; height: 60px; background-color: #fce4ec; color: #E91E63; font-size: 1.5rem;">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Total Favorit</h6>
+                        <h3 class="mb-0 fw-bold">{{ $totalFavorit ?? 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm mt-2" style="border-radius: 12px; height: 300px;">

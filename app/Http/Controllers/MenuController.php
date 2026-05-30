@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class MenuController extends Controller
 {
-    // [GET] Tampilkan halaman kelola menu (Tabel)
+    // [GET] Tampilkan halaman kelola menu (Tabel Web Admin)
     public function index()
     {
         // Ambil semua data menu dari database
@@ -17,17 +17,17 @@ class MenuController extends Controller
         return view('admin.menus', compact('menus'));
     }
 
-    // [GET] Tampilkan form tambah menu baru
+    // [GET] Tampilkan form tambah menu baru (Web Admin)
     public function create()
     {
         // Arahkan ke file resources/views/admin/create_menu.blade.php
         return view('admin.create_menu');
     }
 
-    // [POST] Simpan data menu baru dari form ke database
+    // [POST] Simpan data menu baru (Mendukung Web Admin & API Postman/Android)
     public function store(Request $request)
     {
-        // 1. Validasi input dari form
+        // 1. Validasi input
         $request->validate([
             'nama_menu' => 'required|string|max:255',
             'harga'     => 'required|numeric',
@@ -45,7 +45,7 @@ class MenuController extends Controller
         }
 
         // 3. Simpan ke database
-        Menu::create([
+        $menu = Menu::create([
             'nama_menu' => $request->nama_menu,
             'harga'     => $request->harga,
             'kategori'  => $request->kategori,
@@ -54,18 +54,27 @@ class MenuController extends Controller
             'deskripsi' => $request->deskripsi,
         ]);
 
-        // 4. Kembali ke halaman tabel dengan pesan sukses
+        // 4. JIKA PERMINTAAN DARI API / POSTMAN / ANDROID
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Menu berhasil ditambahkan!',
+                'data'    => $menu
+            ], 201);
+        }
+
+        // Kembali ke halaman tabel dengan pesan sukses (Untuk Web Admin)
         return redirect()->route('admin.menus')->with('success', 'Menu berhasil ditambahkan!');
     }
 
-    // [GET] Tampilkan form edit menu
+    // [GET] Tampilkan form edit menu (Web Admin)
     public function edit($id)
     {
         $menu = Menu::findOrFail($id);
         return view('admin.edit_menu', compact('menu'));
     }
 
-    // [PUT] Simpan perubahan data menu
+    // [PUT] Simpan perubahan data menu (Mendukung Web Admin & API Postman/Android)
     public function update(Request $request, $id)
     {
         $menu = Menu::findOrFail($id);
@@ -82,7 +91,7 @@ class MenuController extends Controller
 
         $imagePath = $menu->foto;
 
-        // 2. Cek apakah admin mengupload foto baru
+        // 2. Cek apakah ada upload foto baru
         if ($request->hasFile('foto')) {
             // Hapus foto lama dari penyimpanan jika ada
             if ($menu->foto && Storage::disk('public')->exists($menu->foto)) {
@@ -102,12 +111,22 @@ class MenuController extends Controller
             'deskripsi' => $request->deskripsi,
         ]);
 
-        // 4. Kembali ke halaman tabel dengan pesan sukses
+        // 4. JIKA PERMINTAAN DARI API / POSTMAN / ANDROID
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Menu berhasil diperbarui!',
+                'data'    => $menu
+            ], 200);
+        }
+
+        // Kembali ke halaman tabel dengan pesan sukses (Untuk Web Admin)
         return redirect()->route('admin.menus')->with('success', 'Menu berhasil diperbarui!');
     }
 
-    // [DELETE] Menghapus menu
-    public function destroy($id)
+    // [DELETE] Menghapus menu (Mendukung Web Admin & API Postman/Android)
+    // FIX: Menambahkan parameter Request $request agar tidak error undefined variable
+    public function destroy(Request $request, $id)
     {
         $menu = Menu::findOrFail($id);
 
@@ -119,6 +138,15 @@ class MenuController extends Controller
         // Hapus data dari tabel
         $menu->delete();
 
+        // JIKA PERMINTAAN DARI API / POSTMAN / ANDROID
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Menu berhasil dihapus!'
+            ], 200);
+        }
+
+        // Kembali ke halaman tabel dengan pesan sukses (Untuk Web Admin)
         return redirect()->route('admin.menus')->with('success', 'Menu berhasil dihapus!');
     }
 }
