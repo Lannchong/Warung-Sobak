@@ -7,10 +7,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PesananController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ApiOrderController; 
+use App\Http\Controllers\API\ReviewController; // <--- (TAMBAHAN) Panggil controller baru
 
-// =========================================================================
 // RUTE JALUR BEBAS (Tanpa Perlu Login / Token)
-// =========================================================================
 Route::post('/register', [ApiController::class, 'register']);
 Route::post('/login', [ApiController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'googleLogin']); 
@@ -24,9 +23,11 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/menus', [ApiController::class, 'getMenus']);
 Route::post('/menus', [MenuController::class, 'store']); 
 
-// =========================================================================
+//TAMBAHAN RUTE UNTUK MENERIMA ULASAN DARI ANDROID 
+Route::post('/reviews', [ReviewController::class, 'store']);
+
+
 // RUTE JALUR AMAN (Android Wajib Kirim Token)
-// =========================================================================
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [ApiController::class, 'logout']);
     
@@ -39,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // API Ubah Password (Saat User Sudah Login)
     Route::post('/change-password', [ApiController::class, 'changePassword']);
     
-    // API Tambah Ulasan
+    // API Tambah Ulasan (Bawaan Lama)
     Route::post('/create-review', [ApiController::class, 'createReview']);
     
     // --- API FAVORIT ---

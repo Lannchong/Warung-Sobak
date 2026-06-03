@@ -13,11 +13,11 @@
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Nama Pelanggan</th>
-                            <th>Rating</th>
+                            <th width="5%">No</th>
+                            <th width="20%">Nama Pelanggan</th>
+                            <th width="15%">Rating</th>
                             <th>Kritik & Saran</th>
-                            <th>Tanggal Masuk</th>
+                            <th width="15%">Tanggal Masuk</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,14 +33,14 @@
                                         ☆
                                     @endif
                                 @endfor
-                                ({{ $ulasan->rating }}/5)
+                                <span class="text-dark ms-1">({{ $ulasan->rating }}/5)</span>
                             </td>
                             <td>{{ $ulasan->saran_kritik ?? '-' }}</td>
                             <td>{{ $ulasan->created_at->format('d M Y, H:i') }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Belum ada ulasan dari pelanggan.</td>
+                            <td colspan="5" class="text-center text-muted py-4">Belum ada ulasan dari pelanggan.</td>
                         </tr>
                         @endforelse
                     </tbody>

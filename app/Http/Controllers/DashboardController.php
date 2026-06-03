@@ -6,24 +6,22 @@ use Illuminate\Http\Request;
 use App\Models\User; 
 use App\Models\Menu;
 use App\Models\Order; 
-use App\Models\Ulasan; // <--- SINKRON: Menggunakan Model Ulasan
-use App\Models\Favorite; // <--- TAMBAHAN: Menggunakan Model Favorite
+use App\Models\Ulasan; 
+use App\Models\Favorite; 
 use Illuminate\Support\Facades\Hash; 
 use Illuminate\Support\Facades\Storage; 
 
 class DashboardController extends Controller
 {
-    //  1. HALAMAN UTAMA DASHBOARD 
+    // 1. HALAMAN UTAMA DASHBOARD 
     public function dashboard(Request $request) 
     {
-        // Hitung total dari masing-masing tabel untuk ditampilkan di atas (Ringkasan)
         $totalPengguna = User::count();
         $totalMenu = Menu::count();
         $totalPesanan = Order::count();
-        $totalUlasan = Ulasan::count(); // <--- TAMBAHAN: Hitung total ulasan
-        $totalFavorit = Favorite::count(); // <--- TAMBAHAN: Hitung total favorit
+        $totalUlasan = Ulasan::count(); 
+        $totalFavorit = Favorite::count(); 
 
-        // Fitur pencarian user (bila perlu di dashboard)
         $search = $request->input('search');
         if ($search) {
             $users = User::where('name', 'LIKE', "%{$search}%")
@@ -33,7 +31,6 @@ class DashboardController extends Controller
             $users = User::all(); 
         }
         
-        // Jangan lupa compact variabel hitungannya
         return view('admin.dashboard', compact('users', 'totalPengguna', 'totalMenu', 'totalPesanan', 'totalUlasan', 'totalFavorit'));
     }
 
@@ -58,11 +55,12 @@ class DashboardController extends Controller
         return view('admin.orders', compact('orders'));
     }
 
-    // -- BARU: HALAMAN MELIHAT ULASAN PELANGGAN DI WEB ADMIN
+    // -- 5. HALAMAN MELIHAT ULASAN PELANGGAN DI WEB ADMIN
     public function ulasans()
     {
+        // Ambil ulasan dari database, sertakan data user, urutkan dari terbaru
         $ulasans = Ulasan::with(['user'])->orderBy('created_at', 'desc')->get();
-        return view('admin.ulasan', compact('ulasans')); // Sesuai dengan href="/admin/ulasan" di sidebar
+        return view('admin.ulasan', compact('ulasans')); 
     }
 
     // FUNGSI UNTUK TAMBAH USER 
